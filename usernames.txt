@@ -1,0 +1,14 @@
+# X/Twitter usernames to include in your digest
+# Extracted from users_i_follow_nov27.json
+
+doodlestein
+levie
+shl
+naval
+antoniogm
+CRITWorks
+YaroslavAzhnyuk
+naina_bajekal
+usv
+AnswerDev
+elonmusk

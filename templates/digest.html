@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your X Digest</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.5;
+      color: #0f1419;
+      background: #f7f9fa;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    
+    header {
+      background: #000000;
+      color: #ffffff;
+      padding: 28px 24px;
+      text-align: center;
+    }
+    
+    header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    
+    header p {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+    
+    .author-section {
+      border-bottom: 1px solid #eff3f4;
+      padding: 20px 24px;
+    }
+    
+    .author-section:last-of-type {
+      border-bottom: none;
+    }
+    
+    .author-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .author-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #eff3f4;
+    }
+    
+    .author-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .author-name {
+      font-weight: 700;
+      font-size: 15px;
+      color: #0f1419;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .author-username {
+      color: #536471;
+      font-size: 14px;
+    }
+    
+    .tweet-count {
+      background: #eff3f4;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #536471;
+      white-space: nowrap;
+    }
+    
+    .tweet {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #eff3f4;
+    }
+    
+    .tweet:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    
+    .tweet-text {
+      font-size: 15px;
+      line-height: 1.5;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      color: #0f1419;
+    }
+    
+    .tweet-text a {
+      color: #1d9bf0;
+      text-decoration: none;
+    }
+    
+    .tweet-text a:hover {
+      text-decoration: underline;
+    }
+    
+    .tweet-media {
+      max-width: 100%;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      border: 1px solid #eff3f4;
+    }
+    
+    .tweet-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: #536471;
+    }
+    
+    .tweet-meta a {
+      color: #1d9bf0;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .tweet-meta a:hover {
+      text-decoration: underline;
+    }
+    
+    footer {
+      background: #f7f9fa;
+      padding: 20px 24px;
+      text-align: center;
+      font-size: 13px;
+      color: #536471;
+      border-top: 1px solid #eff3f4;
+    }
+    
+    /* Mobile styles */
+    @media (max-width: 480px) {
+      body { 
+        padding: 12px; 
+      }
+      
+      header { 
+        padding: 20px 16px; 
+      }
+      
+      header h1 {
+        font-size: 22px;
+      }
+      
+      .author-section { 
+        padding: 16px; 
+      }
+      
+      .author-avatar { 
+        width: 40px; 
+        height: 40px; 
+      }
+      
+      .author-name {
+        font-size: 14px;
+      }
+      
+      .author-username {
+        font-size: 13px;
+      }
+      
+      .tweet-count {
+        font-size: 12px;
+        padding: 3px 10px;
+      }
+      
+      .tweet-text {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Your X Digest</h1>
+      <p>{{ date_range[0].strftime('%b %d') }} – {{ date_range[1].strftime('%b %d, %Y') }} · {{ total_tweets }} tweet{% if total_tweets != 1 %}s{% endif %}</p>
+    </header>
+    
+    {% for author, tweets in tweets_by_author.items() %}
+    <section class="author-section">
+      <div class="author-header">
+        {% if author.profile_image_url %}
+        <img src="{{ author.profile_image_url }}" alt="{{ author.name }}" class="author-avatar">
+        {% else %}
+        <div class="author-avatar"></div>
+        {% endif %}
+        <div class="author-info">
+          <div class="author-name">{{ author.name }}</div>
+          <div class="author-username">@{{ author.username }}</div>
+        </div>
+        <span class="tweet-count">{{ tweets|length }} tweet{% if tweets|length != 1 %}s{% endif %}</span>
+      </div>
+      
+      {% for tweet in tweets %}
+      <div class="tweet">
+        <p class="tweet-text">{{ tweet.text | linkify | safe }}</p>
+        {% for media in tweet.media %}
+          {% if media.url %}
+          <img src="{{ media.url }}" alt="Tweet media" class="tweet-media">
+          {% elif media.preview_image_url %}
+          <img src="{{ media.preview_image_url }}" alt="Video thumbnail" class="tweet-media">
+          {% endif %}
+        {% endfor %}
+        <div class="tweet-meta">
+          <time>{{ tweet.created_at | format_time(timezone) }}</time>
+          <a href="{{ tweet.url }}">View on X →</a>
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+    {% endfor %}
+    
+    <footer>
+      <p>Generated automatically by your X Digest bot</p>
+    </footer>
+  </div>
+</body>
+</html>
+
