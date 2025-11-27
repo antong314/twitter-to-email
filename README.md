@@ -103,7 +103,7 @@ EOF
 2. Create an API key
 3. (Optional) Verify your domain for custom sender addresses
 
-### 3. Configure Environment Variables
+### 4. Configure Environment Variables
 
 Copy `.env.example` to `.env` and fill in your credentials:
 
@@ -130,10 +130,9 @@ Optional settings:
 DIGEST_DAYS=1              # 1 = daily, 7 = weekly
 MAX_ACCOUNTS=49            # Max followed accounts to include
 TIMEZONE=UTC               # For timestamp display
-FOLLOWING_CACHE_DAYS=30    # How often to refresh following list
 ```
 
-### 4. Install Dependencies
+### 5. Install Dependencies
 
 Using [UV](https://docs.astral.sh/uv/) (recommended):
 
@@ -141,13 +140,8 @@ Using [UV](https://docs.astral.sh/uv/) (recommended):
 uv sync
 ```
 
-Or with pip:
 
-```bash
-pip install -r requirements.txt
-```
-
-### 5. Run Locally
+### 6. Run Locally
 
 Using UV:
 
@@ -195,11 +189,10 @@ twitter-to-email/
 │   ├── twitter_client.py # X API with search batching
 │   ├── email_builder.py  # HTML email generation
 │   └── email_sender.py   # Resend integration
-├── data/
-│   └── following_cache.json  # Cached following list
 ├── templates/
 │   └── digest.html       # Email template
-├── requirements.txt
+├── usernames.txt         # List of accounts to track (edit this!)
+├── pyproject.toml        # Dependencies (UV)
 ├── railway.json          # Railway deployment config
 └── .env.example
 ```
