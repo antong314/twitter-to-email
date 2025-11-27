@@ -30,16 +30,74 @@ This reduces API usage from ~50 reads/run to **~2-3 reads/run**.
 
 ## Setup
 
-### 1. Get X/Twitter API Credentials
+### 1. Set Up Your Username List
+
+The X API Free tier doesn't include access to the "following" endpoint, so **usernames are maintained manually** in `usernames.txt`.
+
+#### Option A: Add usernames manually
+Edit `usernames.txt` and add one username per line (without the `@` symbol):
+
+```
+elonmusk
+naval
+paulg
+```
+
+#### Option B: Export from X (recommended for many accounts)
+
+1. Go to your following page: `https://x.com/YOUR_USERNAME/following`
+2. Open Chrome DevTools (`F12` or `Cmd+Option+I`)
+3. Go to the **Network** tab
+4. Scroll down on the page to load more accounts
+5. Look for a request containing `Following` in the name
+6. Click it → **Response** tab → Copy the JSON
+7. Save it as `users_i_follow.json` in the project folder
+8. Run the extraction script:
+
+```bash
+python3 << 'EOF'
+import json
+
+with open('users_i_follow.json') as f:
+    data = json.load(f)
+
+instructions = data['data']['user']['result']['timeline']['timeline']['instructions']
+usernames = []
+
+for instruction in instructions:
+    if instruction.get('type') == 'TimelineAddEntries':
+        for entry in instruction.get('entries', []):
+            if 'cursor' in entry.get('entryId', ''):
+                continue
+            try:
+                screen_name = entry['content']['itemContent']['user_results']['result']['core']['screen_name']
+                usernames.append(screen_name)
+            except (KeyError, TypeError):
+                continue
+
+with open('usernames.txt', 'w') as f:
+    f.write("# Usernames for X Daily Digest\n\n")
+    for u in usernames:
+        f.write(f"{u}\n")
+
+print(f"✅ Exported {len(usernames)} usernames to usernames.txt")
+EOF
+```
+
+> **Note:** You may need to scroll and capture multiple network requests to get all your followed accounts.
+
+---
+
+### 2. Get X/Twitter API Credentials
 
 1. Go to [developer.twitter.com](https://developer.twitter.com)
-2. Create a project and app
+2. Create a project and app (the app must be **inside** a Project, not standalone)
 3. Generate these credentials:
    - Bearer Token
    - API Key & Secret
    - Access Token & Secret
 
-### 2. Get Resend API Key
+### 3. Get Resend API Key
 
 1. Sign up at [resend.com](https://resend.com)
 2. Create an API key
