@@ -10,7 +10,7 @@ import tweepy
 from src.config import Config
 
 
-@dataclass
+@dataclass(frozen=True)
 class User:
     """Represents a Twitter/X user."""
 
@@ -20,7 +20,7 @@ class User:
     profile_image_url: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class Tweet:
     """Represents a tweet with its metadata."""
 
