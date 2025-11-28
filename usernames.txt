@@ -12,3 +12,4 @@ naina_bajekal
 usv
 AnswerDev
 elonmusk
+cursor_ai
