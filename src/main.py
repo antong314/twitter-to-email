@@ -1,5 +1,6 @@
 """Main entry point for X Daily Digest."""
 
+import sys
 from datetime import datetime, timedelta, timezone
 
 from src.config import Config
@@ -44,7 +45,7 @@ def main() -> None:
             print("ℹ️  No tweets found in the time range. Skipping email.")
             print("=" * 50)
             print("✅ Digest generation complete (no email sent)")
-            return
+            sys.exit(0)
 
         # 4. Build email
         print()
@@ -66,6 +67,7 @@ def main() -> None:
             print()
             print("=" * 50)
             print("✅ Digest sent successfully!")
+            sys.exit(0)  # Explicit exit to ensure process terminates
         else:
             raise Exception("Email delivery failed")
 
@@ -75,7 +77,7 @@ def main() -> None:
         print("=" * 50)
         print("Attempting to send failure notification...")
         email_sender.send_failure_notification(e)
-        raise  # Re-raise so Railway marks job as failed
+        sys.exit(1)  # Exit with error code
 
 
 if __name__ == "__main__":
