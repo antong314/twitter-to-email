@@ -66,16 +66,18 @@ class TwitterApiIoClient:
     
     Pricing: $0.15/1k tweets, $0.18/1k profiles
     Auth: Just one API key in x-api-key header
+    
+    Automatically fetches followings list from your Twitter account.
     """
     
     BASE_URL = "https://api.twitterapi.io"
-    USERNAMES_FILE = Path("usernames.txt")
     MAX_RETRIES = 5
     RETRY_DELAY = 3.0  # seconds between retries, will be multiplied for backoff
     
     def __init__(self, config: Config):
         self.config = config
         self.api_key = config.twitterapi_io_key
+        self.twitter_username = config.twitter_username
         self.headers = {"x-api-key": self.api_key}
     
     def _request_with_retry(
@@ -131,31 +133,66 @@ class TwitterApiIoClient:
         print(f"⚠️ Max retries ({max_retries}) exceeded")
         return None
     
-    def get_usernames_from_file(self) -> List[str]:
-        """Load usernames from usernames.txt file."""
-        if not self.USERNAMES_FILE.exists():
-            raise FileNotFoundError(
-                f"Please create {self.USERNAMES_FILE} with a list of usernames to track.\n"
-                "Add one username per line (without the @ symbol)."
-            )
+    def get_followings(self) -> List[str]:
+        """
+        Fetch list of usernames you follow from twitterapi.io.
+        
+        Cost: ~$0.00015 per call (negligible for daily runs).
+        """
+        print(f"🔄 Fetching followings for @{self.twitter_username}...")
         
         usernames = []
-        with open(self.USERNAMES_FILE) as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                username = line.lstrip("@")
+        cursor = ""
+        page = 0
+        
+        while True:
+            page += 1
+            data = self._request_with_retry(
+                f"{self.BASE_URL}/twitter/user/followings",
+                params={
+                    "userName": self.twitter_username,
+                    "cursor": cursor,
+                },
+            )
+            
+            if data is None:
+                print(f"⚠️ Failed to fetch followings page {page}")
+                break
+            
+            if data.get("status") == "error":
+                print(f"⚠️ API error: {data.get('message', 'Unknown error')}")
+                break
+            
+            followings = data.get("followings", [])
+            for user in followings:
+                username = user.get("userName")
                 if username:
                     usernames.append(username)
+            
+            if page == 1:
+                print(f"   Found {len(followings)} accounts you follow")
+            else:
+                print(f"   Page {page}: {len(followings)} users (total: {len(usernames)})")
+            
+            if not data.get("has_next_page"):
+                break
+            
+            cursor = data.get("next_cursor", "")
+            if not cursor:
+                break
+            
+            # Delay between pages
+            time.sleep(1.0)
         
         if not usernames:
             raise ValueError(
-                f"{self.USERNAMES_FILE} is empty. Add usernames to track (one per line)."
+                f"Could not fetch followings for @{self.twitter_username}. "
+                "Check your TWITTER_USERNAME and TWITTERAPI_IO_KEY."
             )
         
+        # Respect max_accounts limit
         if len(usernames) > self.config.max_accounts:
-            print(f"⚠️ Limiting to first {self.config.max_accounts} usernames")
+            print(f"⚠️ Limiting to first {self.config.max_accounts} accounts")
             usernames = usernames[:self.config.max_accounts]
         
         return usernames
@@ -330,10 +367,11 @@ class TwitterApiIoClient:
         Fetch all tweets from tracked accounts.
         
         Uses batched Advanced Search for efficiency.
+        Automatically fetches followings from your Twitter account.
         """
-        usernames = self.get_usernames_from_file()
-        print(f"📋 Loaded {len(usernames)} usernames from {self.USERNAMES_FILE}")
         print(f"🌐 Using twitterapi.io backend")
+        usernames = self.get_followings()
+        print(f"👥 Tracking {len(usernames)} accounts")
         
         # Use batch search (more efficient)
         BATCH_SIZE = 20  # Keep queries reasonable length

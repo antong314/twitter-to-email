@@ -20,6 +20,7 @@ class Config:
     
     # twitterapi.io credentials (preferred - simpler and cheaper)
     twitterapi_io_key: str
+    twitter_username: str  # Your Twitter username to fetch followings from
     
     # Email settings
     resend_api_key: str
@@ -51,6 +52,7 @@ class Config:
             access_token_secret=environ.get("ACCESS_TOKEN_SECRET", ""),
             # twitterapi.io key (preferred)
             twitterapi_io_key=environ.get("TWITTERAPI_IO_KEY", ""),
+            twitter_username=environ.get("TWITTER_USERNAME", ""),
             # Email settings
             resend_api_key=environ.get("RESEND_API_KEY", ""),
             email_from=environ.get("EMAIL_FROM", ""),
@@ -75,7 +77,11 @@ class Config:
 
         # Check Twitter API credentials
         # Either twitterapi.io key OR all legacy credentials must be present
-        if not self.twitterapi_io_key:
+        if self.twitterapi_io_key:
+            # Using twitterapi.io - need username to fetch followings
+            if not self.twitter_username:
+                missing.append("TWITTER_USERNAME (required with TWITTERAPI_IO_KEY)")
+        else:
             # Fall back to legacy X API - all credentials required
             legacy_missing = []
             if not self.bearer_token:
