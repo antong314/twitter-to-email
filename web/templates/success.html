@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You're In! — X Digest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .success-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: #1a1a1a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+            animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .success-icon svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+        
+        .success-title {
+            font-family: var(--font-serif);
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -0.03em;
+            animation: fadeUp 0.6s ease-out 0.2s both;
+        }
+        
+        @keyframes fadeUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        .success-subtitle {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            font-style: italic;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            animation: fadeUp 0.6s ease-out 0.4s both;
+        }
+        
+        .success-details {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            animation: fadeUp 0.6s ease-out 0.6s both;
+            border: 1px solid var(--border-light);
+        }
+        
+        .success-details p {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+        
+        .success-details strong {
+            color: var(--text-main);
+        }
+        
+        .success-cta {
+            animation: fadeUp 0.6s ease-out 0.8s both;
+        }
+        
+        .success-cta a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+        }
+        
+        .success-cta a:hover {
+            color: var(--text-main);
+        }
+        
+        @media (max-width: 600px) {
+            .success-title {
+                font-size: 2.5rem;
+            }
+            .success-subtitle {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-image"></div>
+    <div class="background-overlay"></div>
+    
+    <div class="success-container">
+        <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        
+        <h1 class="success-title">You're in!</h1>
+        
+        <p class="success-subtitle">
+            {% if is_new %}
+            Welcome to the anti-feed.
+            {% else %}
+            Welcome back. Your subscription is active.
+            {% endif %}
+        </p>
+        
+        <div class="success-details">
+            <p>
+                We'll send tweets from <strong>@{{ handle }}</strong>'s following list<br>
+                to <strong>{{ email }}</strong> daily.
+            </p>
+        </div>
+        
+        <div class="success-cta">
+            <a href="/">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Back to home
+            </a>
+        </div>
+    </div>
+</body>
+</html>
+

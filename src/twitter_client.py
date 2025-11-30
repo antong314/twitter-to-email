@@ -67,17 +67,18 @@ class TwitterApiIoClient:
     Pricing: $0.15/1k tweets, $0.18/1k profiles
     Auth: Just one API key in x-api-key header
     
-    Automatically fetches followings list from your Twitter account.
+    Automatically fetches followings list from the specified Twitter account.
     """
     
     BASE_URL = "https://api.twitterapi.io"
     MAX_RETRIES = 5
     RETRY_DELAY = 3.0  # seconds between retries, will be multiplied for backoff
     
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, username_override: Optional[str] = None):
         self.config = config
         self.api_key = config.twitterapi_io_key
-        self.twitter_username = config.twitter_username
+        # Use override if provided, otherwise fall back to config
+        self.twitter_username = username_override or config.twitter_username
         self.headers = {"x-api-key": self.api_key}
     
     def _request_with_retry(

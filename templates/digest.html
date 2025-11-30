@@ -245,6 +245,11 @@
     
     <footer>
       <p>Generated automatically by your X Digest bot</p>
+      {% if unsubscribe_url %}
+      <p style="margin-top: 12px;">
+        <a href="{{ unsubscribe_url }}" style="color: #536471; font-size: 12px;">Unsubscribe from this digest</a>
+      </p>
+      {% endif %}
     </footer>
   </div>
 </body>

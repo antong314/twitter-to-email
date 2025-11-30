@@ -38,6 +38,8 @@ class EmailBuilder:
         tweets_by_author: Dict[User, List[Tweet]],
         date_range: Tuple[datetime, datetime],
         timezone: str = "UTC",
+        recipient_email: str = "",
+        base_url: str = "",
     ) -> EmailContent:
         """
         Build complete email content from tweets.
@@ -46,6 +48,8 @@ class EmailBuilder:
             tweets_by_author: Dictionary mapping users to their tweets.
             date_range: Tuple of (start_date, end_date) for the digest period.
             timezone: Timezone for displaying timestamps.
+            recipient_email: Email address of the recipient (for unsubscribe link).
+            base_url: Base URL of the web app (for unsubscribe link).
             
         Returns:
             EmailContent with subject, HTML body, and plain text body.
@@ -55,6 +59,10 @@ class EmailBuilder:
         # Generate subject
         end_date = date_range[1].strftime("%b %d")
         subject = f"Your X digest – {total_tweets} tweets ({end_date})"
+        
+        # Build unsubscribe URL
+        from urllib.parse import quote
+        unsubscribe_url = f"{base_url}/unsubscribe?email={quote(recipient_email)}" if base_url and recipient_email else ""
 
         # Render HTML template
         template = self.env.get_template("digest.html")
@@ -63,11 +71,12 @@ class EmailBuilder:
             total_tweets=total_tweets,
             date_range=date_range,
             timezone=timezone,
+            unsubscribe_url=unsubscribe_url,
         )
 
         # Generate plain text fallback
         text_body = self._generate_text_fallback(
-            tweets_by_author, total_tweets, date_range, timezone
+            tweets_by_author, total_tweets, date_range, timezone, unsubscribe_url
         )
 
         return EmailContent(
@@ -135,6 +144,7 @@ class EmailBuilder:
         total_tweets: int,
         date_range: Tuple[datetime, datetime],
         timezone: str = "UTC",
+        unsubscribe_url: str = "",
     ) -> str:
         """
         Generate plain text version of the email.
@@ -144,6 +154,7 @@ class EmailBuilder:
             total_tweets: Total number of tweets.
             date_range: Tuple of (start_date, end_date).
             timezone: Timezone for timestamps.
+            unsubscribe_url: URL to unsubscribe.
             
         Returns:
             Plain text email content.
@@ -170,6 +181,10 @@ class EmailBuilder:
 
         lines.append("-" * 50)
         lines.append("Generated automatically by your X Digest bot")
+        
+        if unsubscribe_url:
+            lines.append("")
+            lines.append(f"Unsubscribe: {unsubscribe_url}")
 
         return "\n".join(lines)
 

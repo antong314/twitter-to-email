@@ -32,6 +32,7 @@ class Config:
     max_accounts: int = 49
     timezone: str = "UTC"
     following_cache_days: int = 30
+    base_url: str = ""  # Base URL for unsubscribe links (e.g., https://yourdomain.com)
     
     @property
     def use_twitterapi_io(self) -> bool:
@@ -62,6 +63,7 @@ class Config:
             max_accounts=int(environ.get("MAX_ACCOUNTS", "49")),
             timezone=environ.get("TIMEZONE", "UTC"),
             following_cache_days=int(environ.get("FOLLOWING_CACHE_DAYS", "30")),
+            base_url=environ.get("BASE_URL", ""),
         )
 
     def validate(self) -> None:
@@ -70,6 +72,9 @@ class Config:
         Either TWITTERAPI_IO_KEY must be set (preferred), or all legacy X API
         credentials must be set.
         
+        Note: TWITTER_USERNAME and EMAIL_TO are now optional since subscribers
+        provide their own Twitter handles and email addresses.
+        
         Raises:
             ValueError: If any required configuration is missing.
         """
@@ -77,11 +82,7 @@ class Config:
 
         # Check Twitter API credentials
         # Either twitterapi.io key OR all legacy credentials must be present
-        if self.twitterapi_io_key:
-            # Using twitterapi.io - need username to fetch followings
-            if not self.twitter_username:
-                missing.append("TWITTER_USERNAME (required with TWITTERAPI_IO_KEY)")
-        else:
+        if not self.twitterapi_io_key:
             # Fall back to legacy X API - all credentials required
             legacy_missing = []
             if not self.bearer_token:
@@ -101,13 +102,12 @@ class Config:
                     f"{', '.join(legacy_missing)}"
                 )
 
-        # Email settings always required
+        # Email settings - only email_from is required (recipients come from subscribers)
         if not self.resend_api_key:
             missing.append("RESEND_API_KEY")
         if not self.email_from:
             missing.append("EMAIL_FROM")
-        if not self.email_to:
-            missing.append("EMAIL_TO")
+        # Note: EMAIL_TO is now optional - subscribers provide their own emails
 
         if missing:
             raise ValueError(f"Missing required environment variables: {', '.join(missing)}")

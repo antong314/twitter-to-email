@@ -7,10 +7,79 @@ from src.config import Config
 from src.email_builder import EmailBuilder
 from src.email_sender import EmailSender
 from src.twitter_client import TwitterClient
+from src.subscribers import SubscriberStore, Subscriber
+
+
+def process_subscriber(
+    subscriber: Subscriber,
+    config: Config,
+    email_builder: EmailBuilder,
+) -> bool:
+    """
+    Process a single subscriber: fetch tweets and send digest.
+    
+    Args:
+        subscriber: The subscriber to process
+        config: Application configuration
+        email_builder: Email builder instance
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    print(f"\n{'='*50}")
+    print(f"📧 Processing: {subscriber.email}")
+    print(f"   Twitter handle: @{subscriber.twitter_handle}")
+    
+    try:
+        # Create Twitter client for this subscriber's handle
+        twitter = TwitterClient(config, username_override=subscriber.twitter_handle)
+        
+        # Create email sender for this subscriber
+        email_sender = EmailSender(config, recipient_override=subscriber.email)
+        
+        # Fetch tweets
+        print(f"📥 Fetching tweets from last {config.digest_days} day(s)...")
+        tweets_by_author = twitter.fetch_all_tweets(since_days=config.digest_days)
+        
+        total_tweets = sum(len(t) for t in tweets_by_author.values())
+        total_authors = len(tweets_by_author)
+        
+        print(f"✅ Found {total_tweets} tweets from {total_authors} accounts")
+        
+        if total_tweets == 0:
+            print(f"ℹ️  No tweets found for @{subscriber.twitter_handle}. Skipping email.")
+            return True  # Not a failure, just nothing to send
+        
+        # Build email
+        print("📝 Building email digest...")
+        now = datetime.now(timezone.utc)
+        email_content = email_builder.build_digest(
+            tweets_by_author,
+            date_range=(now - timedelta(days=config.digest_days), now),
+            timezone=config.timezone,
+            recipient_email=subscriber.email,
+            base_url=config.base_url,
+        )
+        print(f"   Subject: {email_content.subject}")
+        
+        # Send email
+        print("📧 Sending email...")
+        success = email_sender.send_digest(email_content)
+        
+        if success:
+            print(f"✅ Digest sent to {subscriber.email}")
+            return True
+        else:
+            print(f"❌ Failed to send digest to {subscriber.email}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error processing {subscriber.email}: {e}")
+        return False
 
 
 def main() -> None:
-    """Run the X digest generation and email sending."""
+    """Run the X digest generation and email sending for all subscribers."""
     print("🚀 Starting X digest generation...")
     print(f"⏰ Current time: {datetime.now(timezone.utc).isoformat()}")
     print("=" * 50)
@@ -20,66 +89,54 @@ def main() -> None:
     config.validate()
     print(f"✅ Config loaded")
     print(f"   • Digest period: {config.digest_days} day(s)")
-    print(f"   • Max accounts: {config.max_accounts}")
+    print(f"   • Max accounts per user: {config.max_accounts}")
     print(f"   • Timezone: {config.timezone}")
-    print(f"   • Email to: {config.email_to}")
 
-    # 2. Initialize clients
-    twitter = TwitterClient(config)
-    email_builder = EmailBuilder()
-    email_sender = EmailSender(config)
-
-    try:
-        # 3. Fetch tweets (using search batching - ~2-3 API calls)
-        print()
-        print(f"📥 Fetching tweets from last {config.digest_days} day(s)...")
-        tweets_by_author = twitter.fetch_all_tweets(since_days=config.digest_days)
-
-        total_tweets = sum(len(t) for t in tweets_by_author.values())
-        total_authors = len(tweets_by_author)
-
-        print()
-        print(f"✅ Found {total_tweets} tweets from {total_authors} accounts")
-
-        if total_tweets == 0:
-            print("ℹ️  No tweets found in the time range. Skipping email.")
-            print("=" * 50)
-            print("✅ Digest generation complete (no email sent)")
-            sys.exit(0)
-
-        # 4. Build email
-        print()
-        print("📝 Building email digest...")
-        now = datetime.now(timezone.utc)
-        email_content = email_builder.build_digest(
-            tweets_by_author,
-            date_range=(now - timedelta(days=config.digest_days), now),
-            timezone=config.timezone,
-        )
-        print(f"   Subject: {email_content.subject}")
-
-        # 5. Send email
-        print()
-        print("📧 Sending email...")
-        success = email_sender.send_digest(email_content)
-
-        if success:
-            print()
-            print("=" * 50)
-            print("✅ Digest sent successfully!")
-            sys.exit(0)  # Explicit exit to ensure process terminates
-        else:
-            raise Exception("Email delivery failed")
-
-    except Exception as e:
-        print()
-        print(f"❌ Error: {e}")
+    # 2. Load subscribers
+    subscriber_store = SubscriberStore()
+    subscribers = subscriber_store.get_all_active()
+    
+    if not subscribers:
+        print("\n⚠️  No active subscribers found.")
+        print("   People can subscribe at your web app URL.")
         print("=" * 50)
-        print("Attempting to send failure notification...")
-        email_sender.send_failure_notification(e)
-        sys.exit(1)  # Exit with error code
+        print("✅ Digest generation complete (no subscribers)")
+        sys.exit(0)
+    
+    print(f"\n👥 Found {len(subscribers)} active subscriber(s)")
+    
+    # 3. Initialize shared components
+    email_builder = EmailBuilder()
+    
+    # 4. Process each subscriber
+    successful = 0
+    failed = 0
+    
+    for subscriber in subscribers:
+        try:
+            if process_subscriber(subscriber, config, email_builder):
+                successful += 1
+            else:
+                failed += 1
+        except Exception as e:
+            print(f"❌ Unexpected error for {subscriber.email}: {e}")
+            failed += 1
+    
+    # 5. Summary
+    print("\n" + "=" * 50)
+    print("📊 Summary:")
+    print(f"   • Total subscribers: {len(subscribers)}")
+    print(f"   • Successful: {successful}")
+    print(f"   • Failed: {failed}")
+    print("=" * 50)
+    
+    if failed > 0:
+        print(f"⚠️  {failed} digest(s) failed to send")
+        sys.exit(1)
+    else:
+        print("✅ All digests sent successfully!")
+        sys.exit(0)
 
 
 if __name__ == "__main__":
     main()
-

@@ -1,6 +1,7 @@
 """Email sender using Resend API."""
 
 from datetime import datetime, timezone
+from typing import Optional
 
 import resend
 
@@ -11,8 +12,9 @@ from src.email_builder import EmailContent
 class EmailSender:
     """Sends emails via Resend API."""
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, recipient_override: Optional[str] = None):
         self.config = config
+        self.recipient = recipient_override or config.email_to
         resend.api_key = config.resend_api_key
 
     def send_digest(self, email_content: EmailContent) -> bool:
@@ -29,7 +31,7 @@ class EmailSender:
             response = resend.Emails.send(
                 {
                     "from": self.config.email_from,
-                    "to": self.config.email_to,
+                    "to": self.recipient,
                     "subject": email_content.subject,
                     "html": email_content.html_body,
                     "text": email_content.text_body,
@@ -53,7 +55,7 @@ class EmailSender:
             resend.Emails.send(
                 {
                     "from": self.config.email_from,
-                    "to": self.config.email_to,
+                    "to": self.recipient,
                     "subject": f"❌ X Digest failed – {date_str}",
                     "text": f"""Your X digest failed to generate.
 

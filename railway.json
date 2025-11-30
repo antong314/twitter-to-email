@@ -3,10 +3,5 @@
   "build": {
     "builder": "NIXPACKS",
     "buildCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh && ~/.local/bin/uv sync"
-  },
-  "deploy": {
-    "startCommand": "~/.local/bin/uv run python -m src.main",
-    "cronSchedule": "0 9 * * *"
   }
 }
-
