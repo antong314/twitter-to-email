@@ -124,6 +124,7 @@ Add these to **both services** (use Railway's shared variables feature):
 | `RESEND_API_KEY` | ✅ | Your Resend API key |
 | `EMAIL_FROM` | ✅ | Sender email (e.g., `digest@yourdomain.com`) |
 | `BASE_URL` | ✅ | Your web service URL (e.g., `https://web-production-xxxx.up.railway.app`) |
+| `DATA_DIR` | ❌ | Directory for subscriber data (default: `data`, set to `/data` for Railway volume) |
 | `DIGEST_DAYS` | ❌ | Days to include (default: 1) |
 | `MAX_ACCOUNTS` | ❌ | Max accounts per user (default: 49) |
 | `TIMEZONE` | ❌ | Timezone for display (default: UTC) |
@@ -149,15 +150,27 @@ To avoid duplicating variables:
 
 ## Data Storage
 
-Currently, subscribers are stored in a JSON file (`data/subscribers.json`).
+Subscribers are stored in a JSON file (`{DATA_DIR}/subscribers.json`).
 
-⚠️ **Important for Railway**: Railway's filesystem is ephemeral - data is lost on each deploy. For production, consider:
+### Railway Volume Setup (Recommended)
 
-1. **Railway Volume** - Attach a persistent volume to the web service
-2. **Database** - Use Railway's PostgreSQL addon (requires code changes)
-3. **External Storage** - Use a managed database service
+To persist data across deploys on Railway:
 
-For small-scale personal use, you can manually backup/restore the JSON file.
+1. In your Railway project, click on the **web** service
+2. Go to **Settings** → **Volumes**
+3. Click **"+ Add Volume"**
+4. Set mount path to `/data`
+5. Add environment variable: `DATA_DIR=/data`
+6. Repeat for the **cron** service (same volume or separate)
+
+⚠️ **Important**: Both services need access to the same data. You can either:
+- Mount the same volume to both services, OR
+- Only mount to the web service (cron will still work, just won't see subscribers added during its runtime)
+
+### Alternative Options
+
+- **Database** - Use Railway's PostgreSQL addon (requires code changes)
+- **External Storage** - Use a managed database service
 
 ---
 

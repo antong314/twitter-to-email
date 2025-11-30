@@ -6,9 +6,13 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 import os
 
+from src.config import Config
 from src.subscribers import SubscriberStore, Subscriber
 
 app = FastAPI(title="X Digest")
+
+# Load config
+config = Config.from_env()
 
 # Get the absolute path to the web directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,8 +24,8 @@ app.mount("/static", StaticFiles(directory=os.path.join(WEB_DIR, "static")), nam
 # Templates
 templates = Jinja2Templates(directory=os.path.join(WEB_DIR, "templates"))
 
-# Subscriber storage
-subscriber_store = SubscriberStore()
+# Subscriber storage (uses DATA_DIR from config)
+subscriber_store = SubscriberStore(data_dir=config.data_dir)
 
 
 @app.get("/", response_class=HTMLResponse)

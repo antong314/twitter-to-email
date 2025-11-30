@@ -33,6 +33,7 @@ class Config:
     timezone: str = "UTC"
     following_cache_days: int = 30
     base_url: str = ""  # Base URL for unsubscribe links (e.g., https://yourdomain.com)
+    data_dir: str = "data"  # Directory for storing data (subscribers.json)
     
     @property
     def use_twitterapi_io(self) -> bool:
@@ -64,6 +65,7 @@ class Config:
             timezone=environ.get("TIMEZONE", "UTC"),
             following_cache_days=int(environ.get("FOLLOWING_CACHE_DAYS", "30")),
             base_url=environ.get("BASE_URL", ""),
+            data_dir=environ.get("DATA_DIR", "data"),
         )
 
     def validate(self) -> None:

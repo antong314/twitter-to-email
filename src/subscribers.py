@@ -37,10 +37,12 @@ class SubscriberStore:
     Thread-safe using file locking for concurrent access.
     """
     
-    DEFAULT_PATH = Path("data/subscribers.json")
+    DEFAULT_DIR = "data"
+    FILENAME = "subscribers.json"
     
-    def __init__(self, path: Optional[Path] = None):
-        self.path = path or self.DEFAULT_PATH
+    def __init__(self, data_dir: Optional[str] = None):
+        dir_path = Path(data_dir) if data_dir else Path(self.DEFAULT_DIR)
+        self.path = dir_path / self.FILENAME
         self._ensure_file_exists()
     
     def _ensure_file_exists(self) -> None:

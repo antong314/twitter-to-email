@@ -93,7 +93,7 @@ def main() -> None:
     print(f"   • Timezone: {config.timezone}")
 
     # 2. Load subscribers
-    subscriber_store = SubscriberStore()
+    subscriber_store = SubscriberStore(data_dir=config.data_dir)
     subscribers = subscriber_store.get_all_active()
     
     if not subscribers:
