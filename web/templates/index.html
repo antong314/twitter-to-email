@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X Digest — The Anti-Feed</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="noise-overlay"></div>
+    <main class="main-grid">
+        <div class="content-col">
+            <header class="header">
+                <div class="brand">
+                    <span class="logo-text">The Anti-Feed</span>
+                </div>
+            </header>
+
+            <div class="hero-text">
+                <h1 class="main-title">X Digest</h1>
+                <h2 class="value-prop">
+                    Get the tweets from people you follow <br>
+                    delivered to your inbox.
+                </h2>
+                <p class="description">
+                    Stop doomscrolling. Avoid the algorithmic noise. <br>
+                    Receive a clean, daily summary of updates you actually care about.
+                </p>
+            </div>
+
+            <form action="/subscribe" method="POST" class="signup-form">
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="handle">Your X Handle</label>
+                        <input type="text" id="handle" name="handle" placeholder="@elonmusk" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">
+                    <span>Start My Digest</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <p class="micro-copy">Free to start. No spam. Unsubscribe anytime.</p>
+            </form>
+        </div>
+
+        <div class="visual-col">
+            <div class="digest-mockup-card">
+                <div class="mockup-header">
+                    <div class="mockup-date">Friday, Nov 30</div>
+                    <div class="mockup-title">Your Daily Update</div>
+                </div>
+                
+                <div class="mockup-content">
+                    <!-- Tweet 1 -->
+                    <div class="mockup-tweet">
+                        <img src="https://unavatar.io/twitter/paulg" alt="Paul Graham" class="tweet-avatar">
+                        <div class="tweet-body">
+                            <div class="tweet-meta">
+                                <span class="tweet-name">Paul Graham</span>
+                                <span class="tweet-handle">@paulg</span>
+                            </div>
+                            <p class="tweet-text">
+                                The best way to get good ideas is to notice problems. The best way to notice problems is to try to do things.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Tweet 2 -->
+                    <div class="mockup-tweet">
+                        <img src="https://unavatar.io/twitter/lexfridman" alt="Lex Fridman" class="tweet-avatar">
+                        <div class="tweet-body">
+                            <div class="tweet-meta">
+                                <span class="tweet-name">Lex Fridman</span>
+                                <span class="tweet-handle">@lexfridman</span>
+                            </div>
+                            <p class="tweet-text">
+                                Read books. It's the highest bandwidth way to consume the wisdom of the greatest minds in history.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Tweet 3 -->
+                    <div class="mockup-tweet">
+                        <img src="https://unavatar.io/twitter/naval" alt="Naval" class="tweet-avatar">
+                        <div class="tweet-body">
+                            <div class="tweet-meta">
+                                <span class="tweet-name">Naval</span>
+                                <span class="tweet-handle">@naval</span>
+                            </div>
+                            <p class="tweet-text">
+                                A calm mind, a fit body, and a house full of love. These things cannot be bought - they must be earned.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mockup-badge">
+                    <span>Example Digest</span>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

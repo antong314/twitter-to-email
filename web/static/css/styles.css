@@ -1,0 +1,367 @@
+:root {
+    --bg-color: #f4f4f0;
+    --card-bg: #ffffff;
+    --text-main: #1a1a1a;
+    --text-muted: #555555;
+    --text-light: #777777;
+    --accent-color: #1a1a1a;
+    --border-light: #e5e5e5;
+    --font-serif: 'Playfair Display', serif;
+    --font-sans: 'Inter', sans-serif;
+    --max-width: 1200px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Noise Texture */
+.noise-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E");
+}
+
+/* Layout */
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: 100vh;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2rem;
+    gap: 4rem;
+    position: relative;
+    z-index: 1;
+}
+
+@media (min-width: 900px) {
+    .main-grid {
+        grid-template-columns: 1fr 1fr;
+        align-items: center;
+        padding: 4rem;
+    }
+}
+
+/* Left Column: Content */
+.content-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 540px;
+    margin: 0 auto;
+}
+
+@media (min-width: 900px) {
+    .content-col {
+        margin: 0;
+    }
+}
+
+.header {
+    margin-bottom: 2rem;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-light);
+}
+
+/* Typography Updates */
+.main-title {
+    font-family: var(--font-serif);
+    font-size: 5rem;
+    line-height: 1;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.04em;
+    color: var(--text-main);
+    margin-left: -0.05em;
+}
+
+.value-prop {
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    font-weight: 400;
+    font-style: italic;
+    line-height: 1.3;
+    color: var(--text-main);
+    margin-bottom: 1.5rem;
+}
+
+.description {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    margin-bottom: 3rem;
+    line-height: 1.6;
+    max-width: 480px;
+}
+
+@media (min-width: 900px) {
+    .main-title {
+        font-size: 6rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .main-title {
+        font-size: 4rem;
+    }
+    .value-prop {
+        font-size: 1.5rem;
+    }
+}
+
+/* Form */
+.signup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.input-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+input {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--text-main);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+}
+
+.btn-submit {
+    background: var(--text-main);
+    color: #fff;
+    border: none;
+    padding: 1.25rem;
+    border-radius: 8px;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-top: 0.5rem;
+}
+
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.micro-copy {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    text-align: center;
+}
+
+/* Right Column: Visual Mockup */
+.visual-col {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 1000px;
+    padding-top: 2rem;
+}
+
+@media (min-width: 900px) {
+    .visual-col {
+        justify-content: flex-end;
+        padding-top: 0;
+    }
+}
+
+.digest-mockup-card {
+    background: var(--card-bg);
+    width: 100%;
+    max-width: 420px;
+    /* Allow height to grow with content */
+    height: auto;
+    min-height: 500px;
+    border-radius: 16px;
+    box-shadow: 
+        0 20px 40px rgba(0,0,0,0.08),
+        0 1px 3px rgba(0,0,0,0.05);
+    padding: 2.5rem 2rem;
+    position: relative;
+    transform: rotate(-3deg) translateY(0px);
+    transition: transform 0.5s ease;
+    border: 1px solid rgba(0,0,0,0.03);
+    animation: float 6s ease-in-out infinite;
+}
+
+.digest-mockup-card:hover {
+    transform: rotate(0deg) translateY(-10px);
+}
+
+@keyframes float {
+    0% { transform: rotate(-3deg) translateY(0px); }
+    50% { transform: rotate(-3deg) translateY(-15px); }
+    100% { transform: rotate(-3deg) translateY(0px); }
+}
+
+.mockup-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.mockup-date {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #999;
+    margin-bottom: 0.5rem;
+}
+
+.mockup-title {
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111;
+}
+
+.mockup-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Fixed Tweet Layout */
+.mockup-tweet {
+    display: flex;
+    gap: 1rem; /* increased spacing */
+    align-items: flex-start;
+    width: 100%; /* Ensure full width */
+}
+
+.tweet-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #eee;
+    object-fit: cover;
+    border: 1px solid rgba(0,0,0,0.05);
+    flex-shrink: 0; /* Prevent avatar shrinking */
+}
+
+.tweet-body {
+    flex: 1;
+    min-width: 0; /* Crucial for text wrapping in flex items */
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem; /* Adjusted spacing */
+}
+
+.tweet-meta {
+    display: flex;
+    flex-direction: column; /* Stack name and handle on mobile/narrow if needed, but let's keep row */
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap; /* Allow wrapping if names are long */
+}
+
+.tweet-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #111;
+    line-height: 1.2;
+}
+
+.tweet-handle {
+    font-size: 0.85rem;
+    color: #777;
+    font-weight: 400;
+}
+
+.tweet-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #333;
+    font-weight: 400;
+    word-wrap: break-word; /* Break long words */
+    margin-top: 0.1rem;
+}
+
+.mockup-badge {
+    position: absolute;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: #000;
+    color: #fff;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    z-index: 2;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 900px) {
+    .visual-col {
+        margin-bottom: 2rem;
+        order: 1;
+    }
+    
+    .digest-mockup-card {
+        min-height: auto;
+        transform: rotate(0deg);
+        animation: none;
+        margin-bottom: 2rem;
+    }
+}
