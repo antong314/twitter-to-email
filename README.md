@@ -92,7 +92,7 @@ The first service is created automatically. Configure it:
 2. Change the name to `web` (optional)
 3. Under **Deploy** → **Start Command**, set:
    ```
-   ~/.local/bin/uv run uvicorn src.web_server:app --host 0.0.0.0 --port $PORT
+   export PATH="$HOME/.local/bin:$PATH" && uv run uvicorn src.web_server:app --host 0.0.0.0 --port ${PORT:-8000}
    ```
 4. Under **Networking**, click **"Generate Domain"** to get a public URL
 5. Add environment variables (see below)
@@ -105,7 +105,7 @@ The first service is created automatically. Configure it:
 4. Change the name to `cron`
 5. Under **Deploy** → **Start Command**, set:
    ```
-   ~/.local/bin/uv run python -m src.main
+   export PATH="$HOME/.local/bin:$PATH" && uv run python -m src.main
    ```
 6. Under **Deploy** → **Cron Schedule**, set:
    ```
