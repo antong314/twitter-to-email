@@ -4,12 +4,17 @@ from fastapi import FastAPI, Request, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
+from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 import os
 
 from src.config import Config
 from src.subscribers import SubscriberStore, Subscriber
 
 app = FastAPI(title="X Digest")
+
+# Force HTTPS in production (when behind a proxy like Railway)
+if os.environ.get("RAILWAY_ENVIRONMENT"):
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 # Load config
 config = Config.from_env()
