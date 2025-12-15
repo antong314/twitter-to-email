@@ -70,6 +70,29 @@ async def health_check():
     }
 
 
+@app.get("/api/subscribers")
+async def get_subscribers(api_key: str = ""):
+    """
+    Get all active subscribers.
+    
+    Protected by API_KEY to prevent public access.
+    """
+    expected_key = config.internal_api_key
+    if not expected_key or api_key != expected_key:
+        return {"error": "Unauthorized"}, 401
+    
+    subscribers = subscriber_store.get_all_active()
+    return {
+        "subscribers": [
+            {
+                "email": s.email,
+                "twitter_handle": s.twitter_handle,
+            }
+            for s in subscribers
+        ]
+    }
+
+
 @app.get("/unsubscribe", response_class=HTMLResponse)
 async def unsubscribe(request: Request, email: str):
     """

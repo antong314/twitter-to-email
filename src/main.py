@@ -2,12 +2,44 @@
 
 import sys
 from datetime import datetime, timedelta, timezone
+from typing import List
+
+import httpx
 
 from src.config import Config
 from src.email_builder import EmailBuilder
 from src.email_sender import EmailSender
 from src.twitter_client import TwitterClient
 from src.subscribers import SubscriberStore, Subscriber
+
+
+def fetch_subscribers_from_api(config: Config) -> List[Subscriber]:
+    """Fetch subscribers from the web server API."""
+    url = f"{config.web_server_url.rstrip('/')}/api/subscribers"
+    params = {"api_key": config.internal_api_key}
+    
+    print(f"📡 Fetching subscribers from {config.web_server_url}...")
+    
+    try:
+        response = httpx.get(url, params=params, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+        
+        subscribers = [
+            Subscriber(
+                twitter_handle=s["twitter_handle"],
+                email=s["email"],
+                subscribed_at="",  # Not needed for processing
+                active=True,
+            )
+            for s in data.get("subscribers", [])
+        ]
+        print(f"✅ Fetched {len(subscribers)} subscriber(s) from API")
+        return subscribers
+        
+    except httpx.RequestError as e:
+        print(f"❌ Failed to fetch subscribers from API: {e}")
+        raise
 
 
 def process_subscriber(
@@ -92,9 +124,13 @@ def main() -> None:
     print(f"   • Max accounts per user: {config.max_accounts}")
     print(f"   • Timezone: {config.timezone}")
 
-    # 2. Load subscribers
-    subscriber_store = SubscriberStore(data_dir=config.data_dir)
-    subscribers = subscriber_store.get_all_active()
+    # 2. Load subscribers (from API if configured, otherwise from local file)
+    if config.web_server_url and config.internal_api_key:
+        subscribers = fetch_subscribers_from_api(config)
+    else:
+        print("📁 Loading subscribers from local file...")
+        subscriber_store = SubscriberStore(data_dir=config.data_dir)
+        subscribers = subscriber_store.get_all_active()
     
     if not subscribers:
         print("\n⚠️  No active subscribers found.")
