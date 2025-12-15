@@ -654,7 +654,10 @@ class TweepyTwitterClient:
 # Factory Function
 # =============================================================================
 
-def create_twitter_client(config: Config) -> TwitterClientProtocol:
+def create_twitter_client(
+    config: Config,
+    username_override: Optional[str] = None,
+) -> TwitterClientProtocol:
     """
     Create the appropriate Twitter client based on configuration.
     
@@ -663,18 +666,22 @@ def create_twitter_client(config: Config) -> TwitterClientProtocol:
     
     Args:
         config: Application configuration
+        username_override: Optional Twitter username to use instead of config.twitter_username
         
     Returns:
         Twitter client instance (either TwitterApiIoClient or TweepyTwitterClient)
     """
     if config.use_twitterapi_io:
-        return TwitterApiIoClient(config)
+        return TwitterApiIoClient(config, username_override=username_override)
     else:
         return TweepyTwitterClient(config)
 
 
 # Backward-compatible alias - use factory function
-def TwitterClient(config: Config) -> TwitterClientProtocol:
+def TwitterClient(
+    config: Config,
+    username_override: Optional[str] = None,
+) -> TwitterClientProtocol:
     """
     Create a Twitter client (backward-compatible alias for create_twitter_client).
     
@@ -682,4 +689,4 @@ def TwitterClient(config: Config) -> TwitterClientProtocol:
     - twitterapi.io if TWITTERAPI_IO_KEY is set (cheaper, simpler)
     - Legacy X API via Tweepy otherwise
     """
-    return create_twitter_client(config)
+    return create_twitter_client(config, username_override=username_override)
