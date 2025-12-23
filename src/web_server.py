@@ -67,10 +67,9 @@ Message:
 
 {message}
 """
-    # Send to the admin email (antong@gmail.com as requested, or fall back to configured email)
-    # Since we don't have a specific admin email config, we'll hardcode or use a new env var.
-    # For now, using the requested email directly.
-    admin_email = "antong@gmail.com"
+    # Send to the admin email (using EMAIL_TO from config)
+    # This was previously hardcoded but now respects the ENV configuration
+    admin_email = config.email_to
     
     email_sender.send_notification(
         subject=subject,
