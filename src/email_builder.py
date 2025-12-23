@@ -62,7 +62,12 @@ class EmailBuilder:
         
         # Build unsubscribe URL
         from urllib.parse import quote
-        unsubscribe_url = f"{base_url}/unsubscribe?email={quote(recipient_email)}" if base_url and recipient_email else ""
+        if base_url and recipient_email:
+            # Remove trailing slash from base_url if present
+            base_url_clean = base_url.rstrip('/')
+            unsubscribe_url = f"{base_url_clean}/unsubscribe?email={quote(recipient_email)}"
+        else:
+            unsubscribe_url = ""
 
         # Render HTML template
         template = self.env.get_template("digest.html")

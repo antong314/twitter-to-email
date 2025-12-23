@@ -85,12 +85,13 @@ def process_subscriber(
         # Build email
         print("📝 Building email digest...")
         now = datetime.now(timezone.utc)
+        # Use web_server_url for unsubscribe links
         email_content = email_builder.build_digest(
             tweets_by_author,
             date_range=(now - timedelta(days=config.digest_days), now),
             timezone=config.timezone,
             recipient_email=subscriber.email,
-            base_url=config.base_url,
+            base_url=config.web_server_url or "",
         )
         print(f"   Subject: {email_content.subject}")
         

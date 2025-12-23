@@ -153,11 +153,30 @@
     
     footer {
       background: #f7f9fa;
-      padding: 20px 24px;
+      padding: 24px;
       text-align: center;
       font-size: 13px;
       color: #536471;
       border-top: 1px solid #eff3f4;
+    }
+    
+    .unsubscribe-link {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 8px 16px;
+      background: #ffffff;
+      border: 1px solid #eff3f4;
+      border-radius: 8px;
+      color: #536471;
+      text-decoration: none;
+      font-size: 12px;
+      transition: all 0.2s ease;
+    }
+    
+    .unsubscribe-link:hover {
+      background: #f7f9fa;
+      border-color: #cfd9de;
+      color: #0f1419;
     }
     
     /* Mobile styles */
@@ -246,8 +265,10 @@
     <footer>
       <p>Generated automatically by your X Digest bot</p>
       {% if unsubscribe_url %}
-      <p style="margin-top: 12px;">
-        <a href="{{ unsubscribe_url }}" style="color: #536471; font-size: 12px;">Unsubscribe from this digest</a>
+      <a href="{{ unsubscribe_url }}" class="unsubscribe-link">Unsubscribe from this digest</a>
+      {% else %}
+      <p style="margin-top: 16px; font-size: 11px; color: #8b98a5;">
+        To unsubscribe, please contact the sender or visit the subscription page.
       </p>
       {% endif %}
     </footer>
