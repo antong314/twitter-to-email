@@ -9,6 +9,7 @@ import os
 
 from src.config import Config
 from src.subscribers import SubscriberStore, Subscriber
+from src.email_sender import EmailSender
 
 app = FastAPI(title="X Digest")
 
@@ -36,6 +37,51 @@ subscriber_store = SubscriberStore(data_dir=config.data_dir)
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy(request: Request):
+    return templates.TemplateResponse("privacy.html", {"request": request})
+
+
+@app.get("/terms", response_class=HTMLResponse)
+async def terms(request: Request):
+    return templates.TemplateResponse("terms.html", {"request": request})
+
+
+@app.get("/contact", response_class=HTMLResponse)
+async def contact(request: Request):
+    return templates.TemplateResponse("contact.html", {"request": request})
+
+
+@app.post("/contact")
+async def contact_submit(request: Request, email: str = Form(...), message: str = Form(...)):
+    """Handle contact form submission."""
+    # Send email to admin
+    email_sender = EmailSender(config)
+    
+    subject = f"New Contact Message from {email}"
+    body = f"""
+From: {email}
+Message:
+
+{message}
+"""
+    # Send to the admin email (antong@gmail.com as requested, or fall back to configured email)
+    # Since we don't have a specific admin email config, we'll hardcode or use a new env var.
+    # For now, using the requested email directly.
+    admin_email = "antong@gmail.com"
+    
+    email_sender.send_notification(
+        subject=subject,
+        body=body,
+        to=admin_email
+    )
+    
+    return templates.TemplateResponse(
+        "contact.html", 
+        {"request": request, "success": True}
+    )
 
 
 @app.post("/subscribe")

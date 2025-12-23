@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact — X Digest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .contact-page {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .contact-content {
+            background: #fff;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-top: 2rem;
+        }
+        .contact-title {
+            font-family: var(--font-serif);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+            text-align: center;
+        }
+        .contact-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+        }
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        textarea {
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-family: var(--font-sans);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            min-height: 150px;
+            resize: vertical;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--text-main);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 0;
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            color: var(--text-main);
+        }
+        .success-message {
+            background: #dcfce7;
+            color: #166534;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="contact-page">
+        <a href="/" class="back-link">← Back to Home</a>
+        
+        <div class="contact-content">
+            <h1 class="contact-title">Contact Us</h1>
+            <p class="contact-subtitle">Have a question or feedback? We'd love to hear from you.</p>
+
+            {% if success %}
+            <div class="success-message">
+                Message sent successfully! We'll get back to you soon.
+            </div>
+            {% endif %}
+
+            <form action="/contact" method="POST" class="contact-form">
+                <div class="form-group">
+                    <label for="email">Your Email</label>
+                    <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" placeholder="How can we help?" required></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    <span>Send Message</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

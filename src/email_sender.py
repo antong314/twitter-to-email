@@ -43,6 +43,34 @@ class EmailSender:
             print(f"❌ Email send failed: {e}")
             return False
 
+    def send_notification(self, subject: str, body: str, to: Optional[str] = None) -> bool:
+        """
+        Send a notification email.
+        
+        Args:
+            subject: Email subject.
+            body: Email body (text).
+            to: Recipient email (optional, defaults to configured recipient).
+            
+        Returns:
+            True on success, False on failure.
+        """
+        try:
+            recipient = to or self.recipient
+            resend.Emails.send(
+                {
+                    "from": self.config.email_from,
+                    "to": recipient,
+                    "subject": subject,
+                    "text": body,
+                }
+            )
+            print(f"📬 Notification sent successfully to {recipient}")
+            return True
+        except Exception as e:
+            print(f"❌ Notification send failed: {e}")
+            return False
+
     def send_failure_notification(self, error: Exception) -> None:
         """
         Send a failure notification email.

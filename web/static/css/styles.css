@@ -385,3 +385,127 @@ input:focus {
         margin-bottom: 2rem;
     }
 }
+
+/* --- NEW ADDITIONS --- */
+
+/* Helper Text */
+.input-helper {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+}
+
+.input-helper svg {
+    color: #22c55e; /* Green checkmark */
+}
+
+/* How It Works Section */
+.how-it-works {
+    background: #fff;
+    padding: 6rem 2rem;
+    border-top: 1px solid var(--border-light);
+    position: relative;
+    z-index: 2; /* above background */
+}
+
+.steps-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+}
+
+.section-title {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 4rem;
+    color: var(--text-main);
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 3rem;
+}
+
+.step-card {
+    padding: 2rem;
+    background: var(--bg-color);
+    border-radius: 12px;
+    position: relative;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.step-number {
+    font-family: var(--font-serif);
+    font-size: 3rem;
+    font-weight: 700;
+    color: rgba(0,0,0,0.05);
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    line-height: 1;
+}
+
+.step-card h4 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    position: relative; /* To sit above number */
+}
+
+.step-card p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    position: relative;
+}
+
+/* Footer */
+.site-footer {
+    padding: 3rem 2rem;
+    background: var(--bg-color);
+    border-top: 1px solid var(--border-light);
+    color: var(--text-light);
+    font-size: 0.9rem;
+    position: relative;
+    z-index: 2;
+}
+
+.footer-content {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+@media (min-width: 600px) {
+    .footer-content {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+}
+
+.footer-links {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.footer-links a {
+    color: var(--text-light);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer-links a:hover {
+    color: var(--text-main);
+}
+
+.heart {
+    color: #ef4444;
+}
