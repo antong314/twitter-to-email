@@ -509,3 +509,142 @@ input:focus {
 .heart {
     color: #ef4444;
 }
+
+/* Story Section */
+.story-section {
+    padding: 8rem 2rem;
+    background: var(--bg-color); /* Matches body bg */
+    position: relative;
+    z-index: 2;
+}
+
+.story-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.story-grid {
+    display: flex;
+    justify-content: center;
+}
+
+/* Content Side */
+.story-content {
+    text-align: center;
+}
+
+.story-tagline {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-light);
+    margin-bottom: 2rem;
+    font-weight: 600;
+}
+
+.story-content h3 {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    line-height: 1.3;
+    color: var(--text-main);
+    margin-bottom: 3rem;
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.story-body {
+    text-align: left;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.story-body p {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+.story-body strong {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+/* About Section */
+.about-section {
+    padding: 6rem 2rem;
+    background: #fff;
+    position: relative;
+    z-index: 2;
+    border-top: 1px solid var(--border-light);
+}
+
+.about-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.about-wrapper {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.section-label {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-light);
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.about-text h4 {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    color: var(--text-main);
+    margin-bottom: 2rem;
+}
+
+.profile-image {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transform: rotate(-1deg);
+    transition: transform 0.3s ease;
+}
+
+.profile-image:hover {
+    transform: rotate(0deg);
+}
+
+.about-text p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 600px) {
+    .story-section, .about-section {
+        padding: 5rem 1.5rem;
+    }
+
+    .story-content h3, .about-text h4 {
+        font-size: 1.75rem;
+        max-width: 100%;
+    }
+    
+    .story-body p, .about-text p {
+        font-size: 1.05rem;
+    }
+}
