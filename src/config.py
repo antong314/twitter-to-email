@@ -29,7 +29,8 @@ class Config:
     
     # App settings
     digest_days: int = 1
-    max_accounts: int = 49
+    max_accounts: int = 200  # Max accounts to fetch tweets from (sorted by popularity)
+    max_following_pages: int = 10  # Max pages to fetch when getting followings (200 users/page)
     timezone: str = "UTC"
     following_cache_days: int = 30
     base_url: str = ""  # Base URL for unsubscribe links (e.g., https://yourdomain.com)
@@ -63,7 +64,8 @@ class Config:
             email_to=environ.get("EMAIL_TO", ""),
             # App settings
             digest_days=int(environ.get("DIGEST_DAYS", "1")),
-            max_accounts=int(environ.get("MAX_ACCOUNTS", "49")),
+            max_accounts=int(environ.get("MAX_ACCOUNTS", "200")),
+            max_following_pages=int(environ.get("MAX_FOLLOWING_PAGES", "10")),
             timezone=environ.get("TIMEZONE", "UTC"),
             following_cache_days=int(environ.get("FOLLOWING_CACHE_DAYS", "30")),
             base_url=environ.get("BASE_URL", ""),

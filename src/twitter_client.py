@@ -32,6 +32,19 @@ class User:
     profile_image_url: str
 
 
+@dataclass
+class FollowingUser:
+    """Represents a user from the followings list with popularity metrics."""
+
+    username: str
+    followers_count: int
+    name: str = ""
+    id: str = ""
+    profile_image_url: str = ""
+    verified: bool = False
+    statuses_count: int = 0
+
+
 @dataclass(frozen=True)
 class Tweet:
     """Represents a tweet with its metadata."""
@@ -138,15 +151,19 @@ class TwitterApiIoClient:
         """
         Fetch list of usernames you follow from twitterapi.io.
         
-        Cost: ~$0.00015 per call (negligible for daily runs).
+        Fetches up to max_following_pages pages (200 users each), then sorts
+        by followers_count (popularity) and returns top max_accounts usernames.
+        
+        Cost: ~$0.18 per 1k users fetched.
         """
         print(f"🔄 Fetching followings for @{self.twitter_username}...")
         
-        usernames = []
+        all_users: List[FollowingUser] = []
         cursor = ""
         page = 0
+        max_pages = self.config.max_following_pages
         
-        while True:
+        while page < max_pages:
             page += 1
             data = self._request_with_retry(
                 f"{self.BASE_URL}/twitter/user/followings",
@@ -165,17 +182,26 @@ class TwitterApiIoClient:
                 break
             
             followings = data.get("followings", [])
-            for user in followings:
-                username = user.get("userName")
+            for user_data in followings:
+                username = user_data.get("userName")
                 if username:
-                    usernames.append(username)
+                    all_users.append(FollowingUser(
+                        username=username,
+                        followers_count=user_data.get("followers_count", 0) or 0,
+                        name=user_data.get("name", ""),
+                        id=str(user_data.get("id", "")),
+                        profile_image_url=user_data.get("profile_image_url_https", "") or "",
+                        verified=user_data.get("verified", False),
+                        statuses_count=user_data.get("statuses_count", 0) or 0,
+                    ))
             
             if page == 1:
-                print(f"   Found {len(followings)} accounts you follow")
+                print(f"   Found {len(followings)} accounts on page 1")
             else:
-                print(f"   Page {page}: {len(followings)} users (total: {len(usernames)})")
+                print(f"   Page {page}/{max_pages}: {len(followings)} users (total: {len(all_users)})")
             
             if not data.get("has_next_page"):
+                print(f"   Reached end of followings list")
                 break
             
             cursor = data.get("next_cursor", "")
@@ -185,18 +211,28 @@ class TwitterApiIoClient:
             # Delay between pages
             time.sleep(1.0)
         
-        if not usernames:
+        if not all_users:
             raise ValueError(
                 f"Could not fetch followings for @{self.twitter_username}. "
                 "Check your TWITTER_USERNAME and TWITTERAPI_IO_KEY."
             )
         
-        # Respect max_accounts limit
-        if len(usernames) > self.config.max_accounts:
-            print(f"⚠️ Limiting to first {self.config.max_accounts} accounts")
-            usernames = usernames[:self.config.max_accounts]
+        # Sort by followers_count (popularity) descending
+        all_users.sort(key=lambda u: u.followers_count, reverse=True)
         
-        return usernames
+        # Take top max_accounts users
+        top_users = all_users[:self.config.max_accounts]
+        
+        # Log statistics
+        if len(all_users) > self.config.max_accounts:
+            print(f"📊 Sorted {len(all_users)} users by popularity, selecting top {len(top_users)}")
+            if top_users:
+                print(f"   Top account: @{top_users[0].username} ({top_users[0].followers_count:,} followers)")
+                print(f"   Min in selection: @{top_users[-1].username} ({top_users[-1].followers_count:,} followers)")
+        else:
+            print(f"📊 Using all {len(all_users)} accounts (sorted by popularity)")
+        
+        return [u.username for u in top_users]
     
     def _parse_tweet(self, tweet_data: dict) -> Optional[Tweet]:
         """Parse a tweet from twitterapi.io response format."""
