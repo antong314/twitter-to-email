@@ -1,11 +1,14 @@
 """Web server for X Digest landing page and subscription handling."""
 
+import base64
+import os
+
 from fastapi import FastAPI, Request, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
-import os
+import httpx
 import resend
 
 from src.config import Config
@@ -166,6 +169,8 @@ async def inbound_email_webhook(request: Request):
     
     Receives emails sent to Resend and forwards them to EMAIL_TO address.
     Configure this endpoint in Resend Dashboard under Webhooks.
+    
+    See: https://github.com/resend/resend-python/blob/main/examples/receiving_email.py
     """
     try:
         event = await request.json()
@@ -190,46 +195,61 @@ async def inbound_email_webhook(request: Request):
     resend.api_key = config.resend_api_key
     
     try:
-        # Fetch the full email content (body isn't in the webhook payload)
-        email_content = resend.Emails.get_received(email_id)
+        # Fetch the full email content using Emails.Receiving.get()
+        # See: https://github.com/resend/resend-python/blob/main/examples/receiving_email.py
+        received_email = resend.Emails.Receiving.get(email_id=email_id)
     except Exception as e:
         print(f"❌ Failed to fetch email content: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
     
-    # Build the forwarded email
-    original_from = data.get("from", "Unknown")
-    original_to = data.get("to", [])
-    original_subject = data.get("subject", "No Subject")
+    # Build the forwarded email using data from the received email
+    original_from = received_email.get("from", data.get("from", "Unknown"))
+    original_to = received_email.get("to", data.get("to", []))
+    original_subject = received_email.get("subject", data.get("subject", "No Subject"))
     
     # Create a descriptive subject showing where the email was originally sent
-    to_address = original_to[0] if original_to else "unknown"
+    to_list = original_to if isinstance(original_to, list) else [original_to]
+    to_address = to_list[0] if to_list else "unknown"
     subject = f"[Fwd: {to_address}] {original_subject}"
+    
+    # Get email content
+    html_content = received_email.get("html") or ""
+    text_content = received_email.get("text") or ""
     
     # Build HTML body with original email info
     html_body = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
             <p style="margin: 5px 0;"><strong>From:</strong> {original_from}</p>
-            <p style="margin: 5px 0;"><strong>To:</strong> {', '.join(original_to)}</p>
+            <p style="margin: 5px 0;"><strong>To:</strong> {', '.join(to_list) if isinstance(to_list, list) else to_list}</p>
             <p style="margin: 5px 0;"><strong>Subject:</strong> {original_subject}</p>
         </div>
         <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
         <div>
-            {email_content.get('html') or email_content.get('text', '(No content)')}
+            {html_content or text_content or '(No content)'}
         </div>
     </div>
     """
     
-    # Handle attachments if any
+    # Handle attachments if any - fetch download URLs
     attachments = []
-    for att in data.get("attachments", []):
+    received_attachments = received_email.get("attachments", [])
+    for att in received_attachments:
         try:
-            att_data = resend.Emails.get_received_attachment(email_id, att["id"])
-            attachments.append({
-                "filename": att.get("filename", "attachment"),
-                "content": att_data.get("content", ""),  # base64 encoded
-                "content_type": att.get("content_type", "application/octet-stream"),
-            })
+            # Get attachment details with download URL
+            att_details = resend.Emails.Receiving.Attachments.get(
+                email_id=email_id,
+                attachment_id=att["id"]
+            )
+            # Fetch the actual attachment content
+            async with httpx.AsyncClient() as client:
+                response = await client.get(att_details["download_url"])
+                if response.status_code == 200:
+                    attachments.append({
+                        "filename": att.get("filename", "attachment"),
+                        "content": base64.b64encode(response.content).decode("utf-8"),
+                        "content_type": att.get("content_type", "application/octet-stream"),
+                    })
         except Exception as e:
             print(f"⚠️ Failed to fetch attachment {att.get('filename', 'unknown')}: {e}")
     
@@ -247,9 +267,9 @@ async def inbound_email_webhook(request: Request):
     }
     
     # Add plain text fallback
-    text_content = email_content.get("text", "")
     if text_content:
-        params["text"] = f"From: {original_from}\nTo: {', '.join(original_to)}\nSubject: {original_subject}\n\n---\n\n{text_content}"
+        to_str = ', '.join(to_list) if isinstance(to_list, list) else to_list
+        params["text"] = f"From: {original_from}\nTo: {to_str}\nSubject: {original_subject}\n\n---\n\n{text_content}"
     
     if attachments:
         params["attachments"] = attachments
