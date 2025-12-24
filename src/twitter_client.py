@@ -55,6 +55,7 @@ class Tweet:
     author: User
     media: List[dict]  # [{url, type, preview_image_url}, ...]
     url: str  # Direct link to tweet
+    entities: dict = None  # {urls: [], user_mentions: [], hashtags: []} for proper formatting
 
 
 # =============================================================================
@@ -275,6 +276,15 @@ class TwitterApiIoClient:
                         "preview_image_url": m.get("media_url_https", ""),
                     })
             
+            # Extract entities for proper text formatting
+            # twitterapi.io returns entities with urls, user_mentions, hashtags
+            raw_entities = tweet_data.get("entities", {})
+            entities = {
+                "urls": raw_entities.get("urls", []),
+                "user_mentions": raw_entities.get("user_mentions", []),
+                "hashtags": raw_entities.get("hashtags", []),
+            }
+            
             tweet_id = str(tweet_data.get("id", ""))
             
             return Tweet(
@@ -284,6 +294,7 @@ class TwitterApiIoClient:
                 author=author,
                 media=media,
                 url=tweet_data.get("url") or f"https://x.com/{author.username}/status/{tweet_id}",
+                entities=entities,
             )
         except Exception as e:
             print(f"⚠️ Error parsing tweet: {e}")
@@ -611,6 +622,14 @@ class TweepyTwitterClient:
                     if key in media_lookup:
                         media.append(media_lookup[key])
 
+            # Extract entities for proper text formatting
+            raw_entities = getattr(tweet_data, "entities", {}) or {}
+            entities = {
+                "urls": raw_entities.get("urls", []),
+                "user_mentions": raw_entities.get("mentions", []),  # v2 API uses "mentions"
+                "hashtags": raw_entities.get("hashtags", []),
+            }
+
             tweets.append(
                 Tweet(
                     id=str(tweet_data.id),
@@ -619,6 +638,7 @@ class TweepyTwitterClient:
                     author=author,
                     media=media,
                     url=f"https://x.com/{author.username}/status/{tweet_data.id}",
+                    entities=entities,
                 )
             )
 

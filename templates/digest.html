@@ -254,7 +254,7 @@
       
       {% for tweet in tweets %}
       <div class="tweet">
-        <p class="tweet-text">{{ tweet.text | linkify | safe }}</p>
+        <p class="tweet-text">{{ tweet.text | linkify(tweet.entities) | safe }}</p>
         {% for media in tweet.media %}
           {% if media.url %}
           <img src="{{ media.url }}" alt="Tweet media" class="tweet-media">

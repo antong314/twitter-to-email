@@ -90,9 +90,77 @@ class EmailBuilder:
             text_body=text_body,
         )
 
-    def _linkify(self, text: str) -> str:
+    def _linkify(self, text: str, entities: dict = None) -> str:
         """
-        Convert @mentions, #hashtags, and URLs to clickable links.
+        Convert @mentions, #hashtags, and URLs to clickable links using Twitter entity data.
+        
+        When entities are provided, uses indices to properly replace t.co URLs with display URLs.
+        Falls back to regex-based linking if entities are not available.
+        
+        Args:
+            text: Raw tweet text.
+            entities: Optional dict with urls, user_mentions, hashtags from Twitter API.
+            
+        Returns:
+            HTML string with links.
+        """
+        if not entities or not any(entities.values()):
+            # Fallback to regex-based linking if no entities
+            return self._linkify_regex(text)
+        
+        # Collect all entities with their replacement info
+        # Format: [(start, end, replacement_html), ...]
+        replacements = []
+        
+        # Process URLs - replace t.co with display_url
+        for url_entity in entities.get("urls", []):
+            indices = url_entity.get("indices", [])
+            if len(indices) >= 2:
+                start, end = indices[0], indices[1]
+                # Use display_url for link text, expanded_url for href
+                display = url_entity.get("display_url") or url_entity.get("url", "")
+                href = url_entity.get("expanded_url") or url_entity.get("url", "")
+                replacement = f'<a href="{href}" style="color: #1d9bf0; text-decoration: none;">{display}</a>'
+                replacements.append((start, end, replacement))
+        
+        # Process @mentions
+        for mention in entities.get("user_mentions", []):
+            indices = mention.get("indices", [])
+            if len(indices) >= 2:
+                start, end = indices[0], indices[1]
+                # Twitter v2 API uses "username", v1 uses "screen_name"
+                username = mention.get("username") or mention.get("screen_name", "")
+                if username:
+                    replacement = f'<a href="https://x.com/{username}" style="color: #1d9bf0; text-decoration: none;">@{username}</a>'
+                    replacements.append((start, end, replacement))
+        
+        # Process #hashtags
+        for hashtag in entities.get("hashtags", []):
+            indices = hashtag.get("indices", [])
+            if len(indices) >= 2:
+                start, end = indices[0], indices[1]
+                # Twitter v2 API uses "tag", v1 uses "text"
+                tag = hashtag.get("tag") or hashtag.get("text", "")
+                if tag:
+                    replacement = f'<a href="https://x.com/hashtag/{tag}" style="color: #1d9bf0; text-decoration: none;">#{tag}</a>'
+                    replacements.append((start, end, replacement))
+        
+        # Sort replacements by start index in REVERSE order
+        # This is critical - we must replace from end to start to preserve indices
+        replacements.sort(key=lambda x: x[0], reverse=True)
+        
+        # Apply replacements
+        result = text
+        for start, end, replacement in replacements:
+            result = result[:start] + replacement + result[end:]
+        
+        return result
+    
+    def _linkify_regex(self, text: str) -> str:
+        """
+        Fallback regex-based linking when entities are not available.
+        
+        Uses a single-pass approach to avoid regex interference between replacements.
         
         Args:
             text: Raw tweet text.
@@ -100,26 +168,41 @@ class EmailBuilder:
         Returns:
             HTML string with links.
         """
-        # Escape HTML first (but we need to be careful since Jinja2 auto-escapes)
-        # URLs - match http/https URLs
-        text = re.sub(
-            r"(https?://[^\s<>\"']+)",
-            r'<a href="\1" style="color: #1d9bf0; text-decoration: none;">\1</a>',
-            text,
-        )
-        # @mentions
-        text = re.sub(
-            r"@(\w+)",
-            r'<a href="https://x.com/\1" style="color: #1d9bf0; text-decoration: none;">@\1</a>',
-            text,
-        )
-        # #hashtags
-        text = re.sub(
-            r"#(\w+)",
-            r'<a href="https://x.com/hashtag/\1" style="color: #1d9bf0; text-decoration: none;">#\1</a>',
-            text,
-        )
-        return text
+        LINK_STYLE = "color: #1d9bf0; text-decoration: none;"
+        
+        # Collect all matches with their positions for single-pass replacement
+        replacements = []
+        
+        # Find URLs
+        for match in re.finditer(r"https?://[^\s<>\"']+", text):
+            url = match.group()
+            replacement = f'<a href="{url}" style="{LINK_STYLE}">{url}</a>'
+            replacements.append((match.start(), match.end(), replacement))
+        
+        # Find @mentions (not preceded by alphanumeric to avoid email-like patterns)
+        for match in re.finditer(r"(?<![a-zA-Z0-9])@(\w+)", text):
+            username = match.group(1)
+            replacement = f'<a href="https://x.com/{username}" style="{LINK_STYLE}">@{username}</a>'
+            replacements.append((match.start(), match.end(), replacement))
+        
+        # Find #hashtags (only at word boundaries, not inside other content)
+        for match in re.finditer(r"(?<![a-zA-Z0-9])#(\w+)", text):
+            # Skip if this looks like a hex color (6 hex chars)
+            tag = match.group(1)
+            if re.match(r"^[0-9a-fA-F]{6}$", tag):
+                continue  # Skip hex colors like #1d9bf0
+            replacement = f'<a href="https://x.com/hashtag/{tag}" style="{LINK_STYLE}">#{tag}</a>'
+            replacements.append((match.start(), match.end(), replacement))
+        
+        # Sort by start position in reverse order
+        replacements.sort(key=lambda x: x[0], reverse=True)
+        
+        # Apply replacements from end to start
+        result = text
+        for start, end, replacement in replacements:
+            result = result[:start] + replacement + result[end:]
+        
+        return result
 
     def _format_time(self, dt: datetime, timezone: str = "UTC") -> str:
         """
