@@ -357,9 +357,16 @@ class TwitterApiIoClient:
         Search for tweets from multiple users using Advanced Search.
         
         Uses query: "(from:user1 OR from:user2 OR ...) -filter:replies"
+        
+        Note: The API may return tweets from other users on later pages
+        (e.g., reply spam that mentions searched users), so we filter
+        results to only include tweets from the expected authors.
         """
         if not usernames:
             return []
+        
+        # Build set of expected usernames for filtering (case-insensitive)
+        expected_authors = set(u.lower() for u in usernames)
         
         # Build query
         from_clauses = " OR ".join([f"from:{u}" for u in usernames])
@@ -375,6 +382,7 @@ class TwitterApiIoClient:
         cursor = ""
         pages_fetched = 0
         max_pages = 10  # Safety limit
+        filtered_count = 0  # Track how many unexpected tweets we filter out
         
         while pages_fetched < max_pages:
             data = self._request_with_retry(
@@ -392,6 +400,12 @@ class TwitterApiIoClient:
             
             page_tweets = data.get("tweets", [])
             for tweet_data in page_tweets:
+                # Filter: only include tweets from expected authors
+                author_username = tweet_data.get("author", {}).get("userName", "")
+                if author_username.lower() not in expected_authors:
+                    filtered_count += 1
+                    continue
+                
                 tweet = self._parse_tweet(tweet_data)
                 if tweet:
                     tweets.append(tweet)
