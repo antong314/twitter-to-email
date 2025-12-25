@@ -47,7 +47,7 @@ class FollowingUser:
 
 @dataclass(frozen=True)
 class Tweet:
-    """Represents a tweet with its metadata."""
+    """Represents a tweet with its metadata and engagement metrics."""
 
     id: str
     text: str
@@ -56,6 +56,39 @@ class Tweet:
     media: List[dict]  # [{url, type, preview_image_url}, ...]
     url: str  # Direct link to tweet
     entities: dict = None  # {urls: [], user_mentions: [], hashtags: []} for proper formatting
+    # Engagement metrics for filtering/sorting
+    view_count: int = 0
+    like_count: int = 0
+    retweet_count: int = 0
+    reply_count: int = 0
+
+
+# =============================================================================
+# Filtering Tier Configuration
+# =============================================================================
+
+@dataclass
+class FilteringTier:
+    """Configuration for tweet filtering based on following count."""
+    min_faves: int  # Minimum likes for server-side filter (0 = no filter)
+    max_tweets_per_author: int  # Max tweets to keep per author (0 = unlimited)
+    
+    @staticmethod
+    def for_following_count(count: int) -> "FilteringTier":
+        """
+        Get the appropriate filtering tier based on how many accounts user follows.
+        
+        Tiers:
+        - ≤ 200 following: No filtering (show everything)
+        - 201 - 2,000 following: Light filtering (min_faves:5, max 5/author)
+        - > 2,000 following: Aggressive filtering (min_faves:10, max 3/author)
+        """
+        if count <= 200:
+            return FilteringTier(min_faves=0, max_tweets_per_author=0)
+        elif count <= 2000:
+            return FilteringTier(min_faves=5, max_tweets_per_author=5)
+        else:
+            return FilteringTier(min_faves=10, max_tweets_per_author=3)
 
 
 # =============================================================================
@@ -155,11 +188,15 @@ class TwitterApiIoClient:
         Fetches up to max_following_pages pages (200 users each), then sorts
         by followers_count (popularity) and returns top max_accounts usernames.
         
+        Also stores the total following count in self.total_following_count
+        for tier-based filtering decisions.
+        
         Cost: ~$0.18 per 1k users fetched.
         """
         print(f"🔄 Fetching followings for @{self.twitter_username}...")
         
         all_users: List[FollowingUser] = []
+        self.total_following_count = 0  # Will be updated as we fetch
         cursor = ""
         page = 0
         max_pages = self.config.max_following_pages
@@ -218,19 +255,21 @@ class TwitterApiIoClient:
                 "Check your TWITTER_USERNAME and TWITTERAPI_IO_KEY."
             )
         
+        # Store total following count for tier-based filtering
+        self.total_following_count = len(all_users)
+        
         # Sort by followers_count (popularity) descending
         all_users.sort(key=lambda u: u.followers_count, reverse=True)
         
-        # Take top max_accounts users
-        top_users = all_users[:self.config.max_accounts]
-        
-        # Log statistics
+        # Take top max_accounts users (only if following more than max_accounts)
         if len(all_users) > self.config.max_accounts:
+            top_users = all_users[:self.config.max_accounts]
             print(f"📊 Sorted {len(all_users)} users by popularity, selecting top {len(top_users)}")
             if top_users:
                 print(f"   Top account: @{top_users[0].username} ({top_users[0].followers_count:,} followers)")
                 print(f"   Min in selection: @{top_users[-1].username} ({top_users[-1].followers_count:,} followers)")
         else:
+            top_users = all_users
             print(f"📊 Using all {len(all_users)} accounts (sorted by popularity)")
         
         return [u.username for u in top_users]
@@ -295,6 +334,11 @@ class TwitterApiIoClient:
                 media=media,
                 url=tweet_data.get("url") or f"https://x.com/{author.username}/status/{tweet_id}",
                 entities=entities,
+                # Engagement metrics
+                view_count=tweet_data.get("viewCount", 0) or 0,
+                like_count=tweet_data.get("likeCount", 0) or 0,
+                retweet_count=tweet_data.get("retweetCount", 0) or 0,
+                reply_count=tweet_data.get("replyCount", 0) or 0,
             )
         except Exception as e:
             print(f"⚠️ Error parsing tweet: {e}")
@@ -352,11 +396,17 @@ class TwitterApiIoClient:
         self,
         usernames: List[str],
         since_days: int = 1,
+        min_faves: int = 0,
     ) -> List[Tweet]:
         """
         Search for tweets from multiple users using Advanced Search.
         
         Uses query: "(from:user1 OR from:user2 OR ...) -filter:replies"
+        
+        Args:
+            usernames: List of Twitter usernames to search.
+            since_days: Number of days to look back.
+            min_faves: Minimum likes for server-side filtering (0 = no filter).
         
         Note: The API may return tweets from other users on later pages
         (e.g., reply spam that mentions searched users), so we filter
@@ -372,11 +422,16 @@ class TwitterApiIoClient:
         from_clauses = " OR ".join([f"from:{u}" for u in usernames])
         query = f"({from_clauses}) -filter:replies"
         
+        # Add min_faves filter if specified (server-side filtering)
+        if min_faves > 0:
+            query += f" min_faves:{min_faves}"
+        
         since = datetime.now(timezone.utc) - timedelta(days=since_days)
         since_str = since.strftime("%Y-%m-%d_%H:%M:%S_UTC")
         query += f" since:{since_str}"
         
-        print(f"🔍 Searching tweets from {len(usernames)} users...")
+        filter_info = f" (min {min_faves} likes)" if min_faves > 0 else ""
+        print(f"🔍 Searching tweets from {len(usernames)} users{filter_info}...")
         
         tweets = []
         cursor = ""
@@ -426,14 +481,29 @@ class TwitterApiIoClient:
     
     def fetch_all_tweets(self, since_days: int = 1) -> Dict[User, List[Tweet]]:
         """
-        Fetch all tweets from tracked accounts.
+        Fetch all tweets from tracked accounts with smart tier-based filtering.
         
         Uses batched Advanced Search for efficiency.
-        Automatically fetches followings from your Twitter account.
+        Automatically fetches followings and applies filtering based on how many
+        accounts the user follows:
+        
+        - ≤ 200 following: No filtering (show everything)
+        - 201 - 2,000 following: Light filtering (min 5 likes, max 5 tweets/author)
+        - > 2,000 following: Aggressive filtering (min 10 likes, max 3 tweets/author)
         """
         print(f"🌐 Using twitterapi.io backend")
         usernames = self.get_followings()
-        print(f"👥 Tracking {len(usernames)} accounts")
+        
+        # Determine filtering tier based on total following count
+        tier = FilteringTier.for_following_count(self.total_following_count)
+        
+        # Log the tier being used
+        if tier.min_faves == 0 and tier.max_tweets_per_author == 0:
+            print(f"👥 Following {self.total_following_count} accounts → No filtering (showing all tweets)")
+        else:
+            print(f"👥 Following {self.total_following_count} accounts → Smart filtering (min {tier.min_faves} likes, max {tier.max_tweets_per_author}/author)")
+        
+        print(f"📋 Tracking {len(usernames)} accounts")
         
         # Use batch search (more efficient)
         BATCH_SIZE = 20  # Keep queries reasonable length
@@ -445,7 +515,8 @@ class TwitterApiIoClient:
             batch_num = (i // BATCH_SIZE) + 1
             print(f"📦 Batch {batch_num}/{total_batches}: {len(batch)} users")
             
-            tweets = self.search_tweets_batch(batch, since_days)
+            # Pass min_faves to search for server-side filtering
+            tweets = self.search_tweets_batch(batch, since_days, min_faves=tier.min_faves)
             all_tweets.extend(tweets)
             print(f"   Found {len(tweets)} tweets")
             
@@ -467,14 +538,26 @@ class TwitterApiIoClient:
                 tweets_by_author[author_key] = []
             tweets_by_author[author_key].append(tweet)
         
-        # Sort tweets within each author by date (newest first)
+        # Sort tweets within each author by engagement (likes) first, then date
         for author in tweets_by_author:
-            tweets_by_author[author].sort(key=lambda t: t.created_at, reverse=True)
+            tweets_by_author[author].sort(
+                key=lambda t: (t.like_count, t.created_at),
+                reverse=True,
+            )
         
-        # Sort authors by most recent tweet
+        # Apply max tweets per author limit (client-side filtering)
+        if tier.max_tweets_per_author > 0:
+            original_count = sum(len(tweets) for tweets in tweets_by_author.values())
+            for author in tweets_by_author:
+                tweets_by_author[author] = tweets_by_author[author][:tier.max_tweets_per_author]
+            filtered_count = sum(len(tweets) for tweets in tweets_by_author.values())
+            if original_count > filtered_count:
+                print(f"✂️  Filtered to top {tier.max_tweets_per_author} tweets per author: {original_count} → {filtered_count} tweets")
+        
+        # Sort authors by total engagement (sum of likes)
         sorted_authors = sorted(
             tweets_by_author.keys(),
-            key=lambda a: tweets_by_author[a][0].created_at if tweets_by_author[a] else datetime.min,
+            key=lambda a: sum(t.like_count for t in tweets_by_author[a]),
             reverse=True,
         )
         
